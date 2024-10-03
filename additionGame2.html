@@ -1,0 +1,999 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>逐步加法練習遊戲</title>
+    <style>
+      /* 保持原有的CSS樣式不變 */
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .game-container,
+      .result-container,
+      .menu-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 350px;
+        position: relative;
+        text-align: center;
+      }
+      .menu-container {
+        height: 350px;
+      }
+      .result-container {
+        height: 200px;
+      }
+      .game-container {
+        height: 300px;
+      }
+      .number,
+      .operator {
+        position: absolute;
+        font-size: 32px;
+        font-family: monospace;
+      }
+      .input-container {
+        position: absolute;
+        bottom: 100px;
+        right: 25px;
+        display: flex;
+        
+      }
+      input {
+        width: 25px;
+        height: 25px;
+        text-align: center;
+        font-size: 24px;
+        border: 1px solid #000;
+        outline: none;
+        margin-left: 15px;
+        
+      }
+      .blue-line {
+        position: absolute;
+        height: 2px;
+        background-color: blue;
+        bottom: 148px;
+        left: 20px;
+        right: 20px;
+      }
+      .message {
+        position: absolute;
+        bottom: 20px;
+        left: 0px;
+        right: 0px;
+        text-align: center;
+        font-size: 36px;
+        color: green;
+      }
+
+      #footer {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 12px;
+        color: gray;
+      }
+
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(5px);
+        }
+        50% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+      .shake {
+        animation: shake 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 主畫面選單 -->
+    <div id="menu-container" class="menu-container">
+      <h2>四位數以內的加法</h2>
+
+      <label for="user-name">請輸入姓名:</label>
+      <select id="user-name" onchange="handleUserNameChange()">
+        <option value="">-- 選擇姓名 --</option>
+        <option value="custom">自訂姓名</option>
+      </select>
+      <button onclick="clearUserNameRecords()">清除姓名記錄</button>
+
+      <br />
+      <br />
+
+      <label for="question-count">選擇題目數量:</label>
+      <select id="question-count">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="40">40</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+
+      <br /><br />
+
+      <label for="num1-digits">被加數:</label>
+      <select id="num1-digits">
+        <option value="1">1位</option>
+        <option value="2">2位</option>
+        <option value="3">3位</option>
+        <option value="4">4位</option>
+      </select>
+      <br /><br />
+      <label for="num2-digits">加數:</label>
+      <select id="num2-digits">
+        <option value="1">1位</option>
+        <option value="2">2位</option>
+        <option value="3">3位</option>
+        <option value="4">4位</option>
+      </select>
+
+      <br /><br />
+
+      <label style="font-size: 14px; margin-right: 10px">
+        <input
+          type="radio"
+          name="carry"
+          value="2"
+          checked
+          style="transform: scale(0.8)"
+        />
+        混合
+      </label>
+
+      <label style="font-size: 14px; margin-right: 10px">
+        <input
+          type="radio"
+          name="carry"
+          value="1"
+          style="transform: scale(0.8)"
+        />
+        進位
+      </label>
+      <label style="font-size: 14px; margin-right: 10px">
+        <input
+          type="radio"
+          name="carry"
+          value="0"
+          style="transform: scale(0.8)"
+        />
+        不進位
+      </label>
+      <br /><br />
+      <button onclick="startGame()">確定</button>
+
+      <div
+        id="footer"
+        style="
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          font-size: 12px;
+          color: gray;
+        "
+      >
+        苗栗縣公館國小資源班
+      </div>
+    </div>
+
+    <!-- 測驗畫面 -->
+    <div id="game-container" class="game-container" style="display: none">
+      <div
+        class="question-counter"
+        id="question-counter"
+        style="position: absolute; top: 20px; left: 20px; font-size: 20px"
+      >
+        第 <span id="current-question">1</span> 題 /
+        <span id="total-questions">1</span> 題
+      </div>
+      <div
+        class="timer"
+        id="timer"
+        style="position: absolute; top: 20px; right: 20px; font-size: 20px"
+      >
+        已用 <span id="elapsed-time">00:00</span>
+      </div>
+      <button
+        id="pause-button"
+        onclick="togglePause()"
+        style="position: absolute; bottom: 20px; left: 20px"
+      >
+        暫停
+      </button>
+
+      <div
+        class="number"
+        style="top: 100px; right: 170px"
+        id="num1-thousands"
+      ></div>
+      <div
+        class="number"
+        style="top: 100px; right: 125px"
+        id="num1-hundreds"
+      ></div>
+      <div class="number" style="top: 100px; right: 80px" id="num1-tens"></div>
+      <div class="number" style="top: 100px; right: 35px" id="num1-ones"></div>
+      <div class="operator" style="top: 140px; right: 215px">+</div>
+      <div
+        class="number"
+        style="top: 140px; right: 170px"
+        id="num2-thousands"
+      ></div>
+      <div
+        class="number"
+        style="top: 140px; right: 125px"
+        id="num2-hundreds"
+      ></div>
+      <div class="number" style="top: 140px; right: 80px" id="num2-tens"></div>
+      <div class="number" style="top: 140px; right: 35px" id="num2-ones"></div>
+      <div class="blue-line"></div>
+      <div class="input-container">
+        <input type="text" maxlength="1" id="input-H" style="display: none" />
+        <input type="text" maxlength="1" id="input-G" style="display: none" />
+        <input type="text" maxlength="1" id="input-E" style="display: none" />
+        <input type="text" maxlength="1" id="input-C" style="display: none" />
+        <input type="text" maxlength="1" id="input-A" />
+      </div>
+      <input
+        type="text"
+        maxlength="1"
+        id="input-F"
+        style="top: 50px; right: 160px; position: absolute; display: none"
+      />
+      <input
+        type="text"
+        maxlength="1"
+        id="input-D"
+        style="top: 50px; right: 115px; position: absolute; display: none"
+      />
+      <input
+        type="text"
+        maxlength="1"
+        id="input-B"
+        style="top: 50px; right: 70px; position: absolute; display: none"
+      />
+      <div class="message" id="message"></div>
+    </div>
+
+    <!-- 結果畫面 -->
+    <div id="result-container" class="result-container" style="display: none">
+      <h3>測驗完成！</h3>
+      <p id="result-message" style="text-align: left"></p>
+      <!-- 在結果畫面中添加兩個按鈕 -->
+      <button onclick="showRecords()">查閱過去記錄</button>
+      <button onclick="clearRecords()">清除歷史記錄</button>
+
+      <button onclick="restartGame()">重新開始</button>
+    </div>
+
+    <script>
+      let num1,
+        num2,
+        totalQuestions,
+        currentQuestion = 0;
+      let inputs = { A: "", B: "", C: "", D: "", E: "", F: "", G: "", H: "" };
+      let visibleInputs = ["A"];
+      let currentFocus = "A";
+
+      let timerInterval;
+      let elapsedTime = 0; // 以秒為單位
+
+      let isPaused = false; // 用來跟蹤計時器是否暫停
+
+      let currentInputId = ""; // 儲存當前聚焦的輸入框ID
+
+      function togglePause() {
+        if (isPaused) {
+          // 如果目前是暫停狀態，則恢復計時
+          startTimer();
+          document.getElementById("pause-button").textContent = "暫停";
+          // 將焦點還原到之前的輸入框
+          if (currentInputId) {
+            document.getElementById(currentInputId).focus();
+          }
+        } else {
+          // 暫停計時
+          clearInterval(timerInterval);
+          document.getElementById("pause-button").textContent = "恢復";
+          // 儲存當前聚焦的輸入框ID
+          currentInputId = document.activeElement.id;
+        }
+        isPaused = !isPaused; // 切換暫停狀態
+      }
+
+      function startTimer() {
+        timerInterval = setInterval(() => {
+          if (!isPaused) {
+            // 只有當不在暫停狀態時才增加時間
+            elapsedTime++;
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            document.getElementById("elapsed-time").textContent = `${String(
+              minutes
+            ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+          }
+        }, 1000);
+      }
+
+      function startGame() {
+        const userName = document.getElementById("user-name").value; // 獲取用戶輸入的姓名
+        totalQuestions = parseInt(
+          document.getElementById("question-count").value
+        );
+        currentQuestion = 0;
+        elapsedTime = 0; // 重置計時
+        document.getElementById("total-questions").textContent = totalQuestions; // 設定總題數
+        document.getElementById("menu-container").style.display = "none";
+        document.getElementById("game-container").style.display = "block";
+        startTimer(); // 啟動碼錶
+        generateProblem();
+        window.userName = userName;
+      }
+
+      // 生成題目
+      function generateProblem() {
+        currentQuestion++;
+        if (currentQuestion > totalQuestions) {
+          showResult();
+          return;
+        }
+
+        // 更新題號顯示
+        document.getElementById("current-question").textContent =
+          currentQuestion;
+        document.getElementById("total-questions").textContent = totalQuestions;
+
+        // 獲取用戶選擇的位數
+
+        const num1Digits = parseInt(
+          document.getElementById("num1-digits").value
+        );
+        const num2Digits = parseInt(
+          document.getElementById("num2-digits").value
+        );
+
+        // 獲取使用者選擇的進位元方式
+        const carryOption = document.querySelector(
+          'input[name="carry"]:checked'
+        ).value;
+
+        let digits1 = [];
+        let digits2 = [];
+        digits1 = generateRandomDigits(num1Digits);
+        digits2 = generateRandomDigits(num2Digits);
+        num1 = parseInt(digits1.join(""));
+        num2 = parseInt(digits2.join(""));
+
+        let tmpA = getDigits(num1);
+        let tmpB = getDigits(num2);
+
+        if (carryOption === "0") {
+          // 不進位
+          if (tmpA.ones + tmpB.ones >= 10) {
+            let twoDigits = findTwoDigitsNonCarry();
+            tmpA.ones = twoDigits[0];
+            tmpB.ones = twoDigits[1];
+          }
+          if (tmpA.tens + tmpB.tens >= 10) {
+            let twoDigits = findTwoDigitsNonCarry();
+            tmpA.tens = twoDigits[0];
+            tmpB.tens = twoDigits[1];
+          }
+          if (tmpA.hundreds + tmpB.hundreds >= 10) {
+            let twoDigits = findTwoDigitsNonCarry();
+            tmpA.hundreds = twoDigits[0];
+            tmpB.hundreds = twoDigits[1];
+          }
+          if (tmpA.thousands + tmpB.thousands >= 10) {
+            let twoDigits = findTwoDigitsNonCarry();
+            tmpA.thousands = twoDigits[0];
+            tmpB.thousands = twoDigits[1];
+          }
+          num1 =
+            tmpA.thousands * 1000 +
+            tmpA.hundreds * 100 +
+            tmpA.tens * 10 +
+            tmpA.ones;
+          num2 =
+            tmpB.thousands * 1000 +
+            tmpB.hundreds * 100 +
+            tmpB.tens * 10 +
+            tmpB.ones;
+        } else if (carryOption === "1") {
+          // 進位
+          if (tmpA.ones + tmpB.ones < 10) {
+            let twoDigits = findTwoDigitsWithCarry();
+            tmpA.ones = twoDigits[0];
+            tmpB.ones = twoDigits[1];
+          }
+          if (
+            num1Digits >= 2 &&
+            num2Digits >= 2 &&
+            tmpA.tens + tmpB.tens < 10
+          ) {
+            let twoDigits = findTwoDigitsWithCarry();
+            tmpA.tens = twoDigits[0];
+            tmpB.tens = twoDigits[1];
+          }
+          if (
+            num1Digits >= 3 &&
+            num2Digits >= 3 &&
+            tmpA.hundreds + tmpB.hundreds < 10
+          ) {
+            let twoDigits = findTwoDigitsWithCarry();
+            tmpA.hundreds = twoDigits[0];
+            tmpB.hundreds = twoDigits[1];
+          }
+          if (
+            num1Digits >= 4 &&
+            num2Digits >= 4 &&
+            tmpA.thousands + tmpB.thousands < 10
+          ) {
+            let twoDigits = findTwoDigitsWithCarry();
+            tmpA.thousands = twoDigits[0];
+            tmpB.thousands = twoDigits[1];
+          }
+          num1 =
+            tmpA.thousands * 1000 +
+            tmpA.hundreds * 100 +
+            tmpA.tens * 10 +
+            tmpA.ones;
+          num2 =
+            tmpB.thousands * 1000 +
+            tmpB.hundreds * 100 +
+            tmpB.tens * 10 +
+            tmpB.ones;
+        } else {
+          // 混合
+        }
+
+        /*
+    let digits1 = [];
+    let digits2 = [];
+
+    if (carryOption === '0') { // 不進位
+        digits1 = generateNonCarryingDigits(num1Digits);
+        digits2 = generateNonCarryingDigits(num2Digits, digits1);
+    } else if (carryOption === '1') { // 進位
+        digits1 = generateCarryingDigits(num1Digits);
+        digits2 = generateCarryingDigits(num2Digits, digits1);
+    } else { // 混合
+        digits1 = generateRandomDigits(num1Digits);
+        digits2 = generateRandomDigits(num2Digits);
+    }
+   
+       // 將數位陣列轉換為實際數位
+    num1 = parseInt(digits1.join(''));
+    num2 = parseInt(digits2.join(''));
+   
+   	//alert(num1+";"+num2);
+   */
+
+        // 初始化輸入物件
+        inputs = { A: "", B: "", C: "", D: "", E: "", F: "", G: "", H: "" };
+
+        visibleInputs = ["A"];
+        currentFocus = "A";
+        document.getElementById("message").textContent = "";
+
+        document.getElementById("num1-thousands").textContent = Math.floor(
+          num1 / 1000
+        );
+        document.getElementById("num1-hundreds").textContent = Math.floor(
+          (num1 % 1000) / 100
+        );
+        document.getElementById("num1-tens").textContent = Math.floor(
+          (num1 % 100) / 10
+        );
+        document.getElementById("num1-ones").textContent = num1 % 10;
+
+        document.getElementById("num2-thousands").textContent = Math.floor(
+          num2 / 1000
+        );
+        document.getElementById("num2-hundreds").textContent = Math.floor(
+          (num2 % 1000) / 100
+        );
+        document.getElementById("num2-tens").textContent = Math.floor(
+          (num2 % 100) / 10
+        );
+        document.getElementById("num2-ones").textContent = num2 % 10;
+
+        if (num1Digits < 4) {
+          document.getElementById("num1-thousands").style.display = "none";
+        } else {
+          document.getElementById("num1-thousands").style.display = "block";
+        }
+        if (num1Digits < 3) {
+          document.getElementById("num1-hundreds").style.display = "none";
+        } else {
+          document.getElementById("num1-hundreds").style.display = "block";
+        }
+        if (num1Digits < 2) {
+          document.getElementById("num1-tens").style.display = "none";
+        } else {
+          document.getElementById("num1-tens").style.display = "block";
+        }
+
+        if (num2Digits < 4) {
+          document.getElementById("num2-thousands").style.display = "none";
+        } else {
+          document.getElementById("num2-thousands").style.display = "block";
+        }
+        if (num2Digits < 3) {
+          document.getElementById("num2-hundreds").style.display = "none";
+        } else {
+          document.getElementById("num2-hundreds").style.display = "block";
+        }
+        if (num2Digits < 2) {
+          document.getElementById("num2-tens").style.display = "none";
+        } else {
+          document.getElementById("num2-tens").style.display = "block";
+        }
+
+        ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((step) => {
+          const input = document.getElementById(`input-${step}`);
+          input.value = "";
+          input.style.display = step === "A" ? "block" : "none";
+        });
+
+        document.getElementById("input-A").focus();
+      }
+
+      function getDigits(number) {
+        const thousands = Math.floor(number / 1000);
+        const hundreds = Math.floor((number % 1000) / 100);
+        const tens = Math.floor((number % 100) / 10);
+        const ones = number % 10;
+
+        return {
+          thousands,
+          hundreds,
+          tens,
+          ones,
+        };
+      }
+
+      function findTwoDigitsWithCarry() {
+        while (true) {
+          const num1 = Math.floor(Math.random() * 9) + 1; // 1 到 9 的隨機數
+          const num2 = Math.floor(Math.random() * 9) + 1; // 1 到 9 的隨機數
+          const sum = num1 + num2;
+
+          if (sum >= 10) {
+            return [num1, num2];
+          }
+        }
+      }
+
+      function findTwoDigitsNonCarry() {
+        while (true) {
+          const num1 = Math.floor(Math.random() * 9) + 1; // 1 到 9 的隨機數
+          const num2 = Math.floor(Math.random() * 9) + 1; // 1 到 9 的隨機數
+          const sum = num1 + num2;
+
+          if (sum > 0 && sum < 10) {
+            return [num1, num2];
+          }
+        }
+      }
+
+      function generateRandomDigits(digits) {
+        let number = [];
+        for (let i = 0; i < digits; i++) {
+          if (i > 0) {
+            number.push(Math.floor(Math.random() * 10));
+          } else {
+            number.push(Math.floor(Math.random() * 9) + 1);
+          }
+        }
+        return number;
+      }
+
+      function generateNonCarryingDigits(digits, referenceDigits = []) {
+        let number = [];
+        for (let i = 0; i < digits; i++) {
+          let maxDigit = 9; // 最大位數為9
+          if (referenceDigits[i] !== undefined) {
+            // 確保與對應位相加不超過9
+            maxDigit = Math.min(maxDigit, 9 - referenceDigits[i]);
+          }
+
+          if (i == 0) {
+            number.push(Math.floor(Math.random() * (maxDigit - 1)) + 1);
+          } else {
+            number.push(Math.floor(Math.random() * (maxDigit + 1)));
+          }
+        }
+        return number;
+      }
+
+      function generateCarryingDigits(digits, referenceDigits = []) {
+        let number = [];
+        for (let i = 0; i < digits; i++) {
+          // 可以是任何數位，產生進位元
+          if (i > 0) {
+            number.push(Math.floor(Math.random() * 10));
+          } else {
+            number.push(Math.floor(Math.random() * 9) + 1);
+          }
+        }
+        return number;
+      }
+
+      // 檢查結果與進行下一步
+      function checkAnswer(step, value) {
+        let correct = false;
+
+        switch (step) {
+          case "A":
+            correct = parseInt(value) === (num1 + num2) % 10;
+            if (correct) {
+              const carry = Math.floor(((num1 % 10) + (num2 % 10)) / 10);
+              inputs.B = carry.toString();
+              if (carry === 0) {
+                if (num1 + num2 > 10) {
+                  visibleInputs.push("C");
+                  currentFocus = "C";
+                } else {
+                  finishProblem();
+                }
+              } else {
+                visibleInputs.push("B");
+                currentFocus = "B";
+              }
+            }
+            break;
+          case "B":
+            correct =
+              parseInt(value) === Math.floor(((num1 % 10) + (num2 % 10)) / 10);
+            if (correct) {
+              visibleInputs.push("C");
+              currentFocus = "C";
+            }
+            break;
+          case "C":
+            const tensSum =
+              Math.floor((num1 % 100) / 10) +
+              Math.floor((num2 % 100) / 10) +
+              parseInt(inputs.B || "0");
+            correct = parseInt(value) === tensSum % 10;
+            if (correct) {
+              const carry = Math.floor(tensSum / 10);
+              inputs.D = carry.toString();
+              if (carry === 0) {
+                if (num1 + num2 > 100) {
+                  visibleInputs.push("E");
+                  currentFocus = "E";
+                } else {
+                  finishProblem();
+                }
+              } else {
+                visibleInputs.push("D");
+                currentFocus = "D";
+              }
+            }
+            break;
+          case "D":
+            const tenCarry = Math.floor(
+              (Math.floor((num1 % 100) / 10) +
+                Math.floor((num2 % 100) / 10) +
+                parseInt(inputs.B || "0")) /
+                10
+            );
+            correct = parseInt(value) === tenCarry;
+            if (correct) {
+              visibleInputs.push("E");
+              currentFocus = "E";
+            }
+            break;
+          case "E":
+            const hundredsSum =
+              Math.floor((num1 % 1000) / 100) +
+              Math.floor((num2 % 1000) / 100) +
+              parseInt(inputs.D || "0");
+            correct = parseInt(value) === hundredsSum % 10;
+            if (correct) {
+              const carry = Math.floor(hundredsSum / 10);
+              inputs.F = carry.toString();
+              if (carry === 0) {
+                if (num1 + num2 > 1000) {
+                  visibleInputs.push("G");
+                  currentFocus = "G";
+                } else {
+                  finishProblem();
+                }
+              } else {
+                visibleInputs.push("F");
+                currentFocus = "F";
+              }
+            }
+            break;
+          case "F":
+            const hundredCarry = Math.floor(
+              (Math.floor((num1 % 1000) / 100) +
+                Math.floor((num2 % 1000) / 100) +
+                parseInt(inputs.D || "0")) /
+                10
+            );
+            correct = parseInt(value) === hundredCarry;
+            if (correct) {
+              visibleInputs.push("G");
+              currentFocus = "G";
+            }
+            break;
+          case "G":
+            const thousandsSum =
+              Math.floor(num1 / 1000) +
+              Math.floor(num2 / 1000) +
+              parseInt(inputs.F || "0");
+            correct = parseInt(value) === thousandsSum % 10;
+            if (correct) {
+              if (thousandsSum >= 10) {
+                visibleInputs.push("H");
+                currentFocus = "H";
+              } else {
+                finishProblem();
+              }
+            }
+            break;
+          case "H":
+            correct = parseInt(value) === Math.floor((num1 + num2) / 10000);
+            if (correct) {
+              finishProblem();
+            }
+            break;
+        }
+
+        if (correct) {
+          inputs[step] = value;
+          document.getElementById(`input-${step}`).value = value;
+          if (currentFocus) {
+            document.getElementById(`input-${currentFocus}`).style.display =
+              "block";
+            document.getElementById(`input-${currentFocus}`).focus();
+          }
+        } else {
+          showError(step);
+        }
+      }
+
+      function getDigitSum(step) {
+        const digitMap = { C: 1, E: 2, G: 3 };
+        const power = digitMap[step] || 0;
+        return (
+          Math.floor((num1 / Math.pow(10, power)) % 10) +
+          Math.floor((num2 / Math.pow(10, power)) % 10)
+        );
+      }
+
+      // 顯示錯誤
+      function showError(step) {
+        const inputField = document.getElementById(`input-${step}`);
+        inputField.classList.add("shake");
+
+        // 選取文字框中的內容
+        inputField.select();
+
+        setTimeout(() => {
+          inputField.classList.remove("shake");
+        }, 500);
+      }
+
+      // 完成問題
+      function finishProblem() {
+        document.getElementById("message").textContent = "正確！";
+        setTimeout(() => {
+          generateProblem();
+        }, 2000);
+      }
+
+      function clearRecords() {
+        if (!window.userName) {
+          alert("請先輸入姓名以清除記錄！");
+          return;
+        }
+
+        // 從 localStorage 清除當前使用者的記錄
+        localStorage.removeItem(`${window.userName}-records`);
+        alert("歷史記錄已清除！");
+      }
+
+      function showRecords() {
+        if (!window.userName) {
+          alert("請先輸入姓名以查看記錄！");
+          return;
+        }
+
+        // 創建一個新的視窗
+        const popupWindow = window.open("", "歷史記錄", "width=400,height=600");
+
+        // 從 localStorage 獲取當前使用者的記錄
+        let records =
+          JSON.parse(localStorage.getItem(`${window.userName}-records`)) || [];
+
+        // 構建記錄內容
+        let content =
+          '<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>歷史記錄</title></head><body>';
+        content += "<h1>歷史記錄</h1>";
+
+        if (records.length === 0) {
+          content += "<p>沒有記錄可顯示！</p>";
+        } else {
+          // 將記錄反向遍歷以顯示最新記錄在最上方
+          for (let i = records.length - 1; i >= 0; i--) {
+            const record = records[i];
+            const recordNumber = records.length - i; // 計算流水號，從1開始
+            content += `
+                <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                    <p>記錄號: ${recordNumber}</p>
+                    <p>姓名: ${record.name}</p>
+                    <p>日期: ${record.date}</p>
+                    <p>單元: ${record.unit}</p>
+                    <p>時間: ${record.time}</p>
+                </div>`;
+          }
+        }
+
+        content += "</body></html>";
+
+        // 將內容寫入快顯視窗
+        popupWindow.document.write(content);
+        popupWindow.document.close(); // 關閉文檔流
+      }
+
+      function showResult() {
+        clearInterval(timerInterval); // 停止計時器
+        document.getElementById("game-container").style.display = "none";
+        document.getElementById("result-container").style.display = "block";
+
+        const minutes = Math.floor(elapsedTime / 60);
+        const seconds = elapsedTime % 60;
+        const formattedTime = `${String(minutes).padStart(2, "0")}分 ${String(
+          seconds
+        ).padStart(2, "0")}秒`;
+
+        // 獲取當前日期
+        const today = new Date();
+        const year = today.getFullYear() - 1911; // 轉換為民國年份
+        const month = today.getMonth() + 1; // 月份從0開始
+        const day = today.getDate();
+        const formattedDate = `${year}/${month}/${day}`; // 格式化日期
+
+        // 獲取單元資訊
+        const num1Digits = document.getElementById("num1-digits").value;
+        const num2Digits = document.getElementById("num2-digits").value;
+        const carryOption = document.querySelector(
+          'input[name="carry"]:checked'
+        ).nextSibling.textContent; // 獲取選中項的文本
+        //const totalQuestions = totalQuestions; // 題目總數
+
+        // 結果資訊
+        const resultMessage = `姓名: ${window.userName}<br>
+        日期: ${formattedDate}<br>
+        單元: ${num1Digits}位加${num2Digits}位，${carryOption}，共${totalQuestions}題<br>
+        時間: ${formattedTime}`;
+
+        // 顯示結果
+        document.getElementById("result-message").innerHTML = resultMessage;
+
+        // 只有在使用者輸入姓名時才保存記錄
+        if (window.userName) {
+          const record = {
+            name: window.userName,
+            date: formattedDate,
+            unit: `${num1Digits}位加${num2Digits}位，${carryOption}，共${totalQuestions}題`,
+            time: formattedTime,
+          };
+
+          // 從 localStorage 獲取現有記錄
+          let records =
+            JSON.parse(localStorage.getItem(`${window.userName}-records`)) ||
+            [];
+          records.push(record); // 添加新記錄
+
+          // 保存更新後的記錄到 localStorage
+          localStorage.setItem(
+            `${window.userName}-records`,
+            JSON.stringify(records)
+          );
+        }
+      }
+
+      // 重新開始遊戲
+      function restartGame() {
+        document.getElementById("result-container").style.display = "none";
+        document.getElementById("menu-container").style.display = "block";
+      }
+
+      // 頁面載入時檢查 localStorage，載入用戶姓名
+      window.onload = function () {
+        const records = JSON.parse(localStorage.getItem("records")) || []; // 讀取所有使用者記錄
+        const selectElement = document.getElementById("user-name");
+
+        // 添加記錄中的使用者姓名到下拉式功能表
+        const userNames = new Set(); // 使用 Set 去重
+        records.forEach((record) => {
+          userNames.add(record.name); // 將姓名添加到 Set 中以避免重複
+        });
+
+        // 將 Set 中的姓名添加到下拉式功能表
+        userNames.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          selectElement.appendChild(option);
+        });
+      };
+
+      // 處理選擇變化
+      function handleUserNameChange() {
+        const selectElement = document.getElementById("user-name");
+        const selectedValue = selectElement.value;
+
+        if (selectedValue === "custom") {
+          // 如果選擇了自訂，清空選擇並允許輸入
+          const customName = prompt("請輸入自訂姓名:");
+          if (customName) {
+            // 添加新姓名到下拉式功能表和 localStorage
+            const option = new Option(customName, customName);
+            selectElement.appendChild(option);
+            selectElement.value = customName; // 設置為選中
+            addUserNameToRecords(customName); // 保存到 localStorage
+          } else {
+            selectElement.value = ""; // 清空選擇
+          }
+        }
+      }
+
+      // 保存自訂姓名到 localStorage
+      function addUserNameToRecords(name) {
+        const records = JSON.parse(localStorage.getItem("records")) || [];
+        records.push({ name: name }); // 這裡可以添加更多資訊
+        localStorage.setItem("records", JSON.stringify(records)); // 更新 localStorage
+      }
+
+      function clearUserNameRecords() {
+        localStorage.removeItem("records"); // 清除所有姓名記錄
+        document.getElementById("user-name").innerHTML =
+          '<option value="">-- 選擇姓名 --</option><option value="custom">自訂姓名</option>'; // 清空下拉選項
+        alert("姓名記錄已清除！"); // 提示用戶
+      }
+
+      document.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("focus", (e) => {
+          currentInputId = e.target.id; // 更新當前聚焦的輸入框ID
+        });
+
+        input.addEventListener("input", (e) => {
+          const step = e.target.id.split("-")[1];
+          checkAnswer(step, e.target.value);
+        });
+      });
+      // 初始化
+      generateProblem();
+    </script>
+  </body>
+</html>
