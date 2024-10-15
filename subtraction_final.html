@@ -568,10 +568,14 @@ restartGame(); // 調用重新開始遊戲的函數
           'input[name="subtractionType"]:checked'
         ).nextSibling.textContent;
 
+        const borrowType = document.querySelector(
+          'input[name="borrowType"]:checked'
+        ).nextSibling.textContent;        
+
         // 結果資訊
         const resultMessage = `姓名：${window.userName}<br>
         日期：${formattedDate}<br>
-        單元：${subtractionType}共${totalQuestions}題<br>
+        單元：${subtractionType}(${borrowType}) - 共${totalQuestions}題<br>
         時間：${formattedTime}`;
 
         // 顯示結果
@@ -582,7 +586,7 @@ restartGame(); // 調用重新開始遊戲的函數
           const record = {
             name: window.userName,
             date: formattedDate,
-            unit: `${subtractionType}共${totalQuestions}題`,
+            unit: `${subtractionType}(${borrowType}) - 共${totalQuestions}題`,
             time: formattedTime,
           };
 
