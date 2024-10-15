@@ -1,10 +1,22 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>直式減法</title>
     <style>
+
+
+body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+
 
 #scroll-container {
     max-height: 200px; /* 設定容器的最大高度 */
@@ -508,7 +520,7 @@
         const record = records[i];
         // 加入流水編號
         const recordNumber = records.length - i; // 計算編號
-        recordsHtml += `<li>${recordNumber}. 姓名: ${record.name}, 日期: ${record.date}, 單元: ${record.unit}, 時間: ${record.time}</li>`;
+        recordsHtml += `<li>${recordNumber}，姓名: ${record.name}，日期: ${record.date}，單元: ${record.unit}，時間：${record.time}</li>`;
     }
     
     recordsHtml += "</ul>";
@@ -557,10 +569,10 @@ restartGame(); // 調用重新開始遊戲的函數
         ).nextSibling.textContent;
 
         // 結果資訊
-        const resultMessage = `姓名: ${window.userName}<br>
-        日期: ${formattedDate}<br>
-        單元: ${subtractionType}，共${totalQuestions}題<br>
-        時間: ${formattedTime}`;
+        const resultMessage = `姓名：${window.userName}<br>
+        日期：${formattedDate}<br>
+        單元：${subtractionType}共${totalQuestions}題<br>
+        時間：${formattedTime}`;
 
         // 顯示結果
         document.getElementById("result-message").innerHTML = resultMessage;
@@ -570,7 +582,7 @@ restartGame(); // 調用重新開始遊戲的函數
           const record = {
             name: window.userName,
             date: formattedDate,
-            unit: `${subtractionType}，共${totalQuestions}題`,
+            unit: `${subtractionType}共${totalQuestions}題`,
             time: formattedTime,
           };
 
