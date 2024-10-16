@@ -118,6 +118,15 @@
 
       let focusArray = [];
 
+
+      function borrowTypeRdoChange(obj){
+        if(obj.value==2){
+          document.getElementById("forceZeroDiv").style.display="block";
+        }else{
+          document.getElementById("forceZeroDiv").style.display="none";
+        }
+      }
+
       function togglePause() {
         if (isPaused) {
           // 如果目前是暫停狀態，則恢復計時
@@ -152,6 +161,7 @@
       }
 
       function startGame() {
+        
         const userName = document.getElementById("user-name").value; // 獲取用戶輸入的姓名
         totalQuestions = parseInt(
           document.getElementById("question-count").value
@@ -171,22 +181,21 @@
       }
 
       function generateProblem() {
-        console.log(
-          `currentRepeat是${currentRepeat},repeatCount是${repeatCount}`
-        );
+        
 
-        if(currentRepeat==0){
+        if (currentRepeat == 0) {
           currentQuestion++;
           if (currentQuestion > totalQuestions) {
             showResult();
             return;
-          }      
+          }
         }
 
-        if (currentRepeat < repeatCount ) {
+        if (currentRepeat < repeatCount) {
           currentRepeat++; // 表示是第幾次作答
-          document.getElementById("currentRepeatTag").textContent=currentRepeat+"/"+repeatCount;
-        } 
+          document.getElementById("currentRepeatTag").textContent =
+            currentRepeat + "/" + repeatCount;
+        }
 
         // 更新題號顯示
         document.getElementById("current-question").textContent =
@@ -195,6 +204,7 @@
 
         focusArray = [];
 
+        
         let inputOnes = document.getElementById("inputOnes");
         let inputTens = document.getElementById("inputTens");
         let inputHundreds = document.getElementById("inputHundreds");
@@ -208,7 +218,12 @@
         let subtrahendOnes = document.getElementById("subtrahendOnes");
         let subtrahendTens = document.getElementById("subtrahendTens");
         let subtrahendHundreds = document.getElementById("subtrahendHundreds");
+        let forceZeroChk=document.getElementById("forceZeroChk");
+
+        //console.log(forceZeroChk.checked);
+
         var promptMessage = document.getElementById("promptMessage");
+
 
         promptMessage.style.display = "none";
         promptMessage.innerText = "";
@@ -295,8 +310,8 @@
               var subtrahend1 = Math.floor(Math.random() * 9) + 1;
               var minuend1 = Math.floor(Math.random() * subtrahend1);
 
-              var minuend2 = Math.floor(Math.random() * 9) + 1;
-              var subtrahend2 = Math.floor(Math.random() * minuend2);
+              var minuend2 = Math.floor(Math.random() * 8) + 2;
+              var subtrahend2 = Math.floor(Math.random() * (minuend2-1))+1;
               minuend = minuend2 * 10 + minuend1;
               subtrahend = subtrahend2 * 10 + subtrahend1;
             } else {
@@ -372,8 +387,8 @@
               var subtrahend2 = Math.floor(Math.random() * 10);
               var minuend2 = Math.floor(Math.random() * subtrahend1);
 
-              var minuend3 = Math.floor(Math.random() * 9) + 1;
-              var subtrahend3 = Math.floor(Math.random() * minuend3) + 1;
+              var minuend3 = Math.floor(Math.random() * 8) + 2;
+              var subtrahend3 = Math.floor(Math.random() * (minuend3-1)) + 1;
               minuend = minuend3 * 100 + minuend2 * 10 + minuend1;
               subtrahend = subtrahend3 * 100 + subtrahend2 * 10 + subtrahend1;
             } else {
@@ -388,10 +403,31 @@
             break;
         }
 
-        //minuend = 404;
-        //subtrahend = 337;
-        console.log(currentRepeat + ":" + repeatCount);
 
+        console.log("original:"+minuend+":"+subtrahend);
+
+
+        if(document.getElementById("forceZeroDiv").style.display=="block" && forceZeroChk.checked){
+          if(minuend>=10 && minuend<100){
+           
+            minuend= Math.floor(minuend / 10) * 10;
+          }else if(minuend>=100 && minuend<1000){
+            
+            if( Math.floor(minuend / 100)== Math.floor(subtrahend / 100) || subtrahend%100==0){
+              console.log("A:"+minuend+":"+subtrahend);
+              minuend=(Math.floor(Math.random()*8)+2)*100;
+              subtrahend=(Math.floor(Math.random()*(minuend-1))+1)*100+Math.floor(Math.random()*90)+10;
+            }else{
+              console.log("B:"+minuend+":"+subtrahend);
+              minuend= Math.floor(minuend / 100) * 100;
+            }
+            
+          }else{
+
+          }
+        }
+        //forceZeroChk.checked
+       
         // 計算正確答案
         if (currentRepeat == 1) {
           minuendReal = minuend;
@@ -877,7 +913,7 @@
     <!-- 主畫面選單 -->
     <div id="menu-container" class="menu-container">
       <h2>三位數以內的減法</h2>
-      
+
       <label for="user-name">請輸入姓名:</label>
       <select id="user-name" onchange="handleUserNameChange()">
         <option value="">-- 選擇姓名 --</option>
@@ -967,6 +1003,7 @@
             value="1"
             checked
             style="transform: scale(0.8)"
+            onchange="borrowTypeRdoChange(this)"
           />
           隨機
         </label>
@@ -977,7 +1014,7 @@
             name="borrowType"
             value="2"
             style="transform: scale(0.8)"
-          />
+            onchange="borrowTypeRdoChange(this)" />
           借位
         </label>
         <label style="font-size: 14px; margin-right: 10px">
@@ -986,19 +1023,28 @@
             name="borrowType"
             value="3"
             style="transform: scale(0.8)"
+            onchange="borrowTypeRdoChange(this)"
           />
           不借位
         </label>
         <br />
-        <label for="repeat-count" style="font-size: 14px; margin-right: 10px">同一題做答次數:</label>
+        <label for="repeat-count" style="font-size: 14px; margin-right: 10px"
+          >同一題做答次數:</label
+        >
         <select id="repeat-count">
-          
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
           <option value="4">4</option>
           <option value="5">5</option>
         </select>
+        <br />
+        <div id="forceZeroDiv" style="display: none"">
+          <input type="checkbox" id="forceZeroChk" />
+          <label for="forceZeroChk" style="font-size: 14px; margin-right: 10px"
+            >被減數強迫尾數為0</label
+          >
+        </div>
       </div>
       <br />
       <button onclick="startGame()">確定</button>
@@ -1024,8 +1070,9 @@
         style="position: absolute; top: 20px; left: 20px; font-size: 20px"
       >
         第 <span id="current-question">1</span>/
-        <span id="total-questions">1</span>題 
-            [第<span id="currentRepeatTag"> 1 </span>次嘗試]
+        <span id="total-questions">1</span>題 [第<span id="currentRepeatTag">
+          1 </span
+        >次嘗試]
       </div>
       <div
         class="timer"
