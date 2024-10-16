@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>直式減法</title>
     <style>
-
-
-body {
+      body {
         font-family: Arial, sans-serif;
         display: flex;
         justify-content: center;
@@ -17,14 +15,13 @@ body {
         background-color: #f0f0f0;
       }
 
-
-#scroll-container {
-    max-height: 200px; /* 設定容器的最大高度 */
-    overflow-y: auto; /* 當內容超過高度時顯示滾動條 */
-    border: 1px solid #ccc; /* 容器邊框 */
-    padding: 10px; /* 容器內邊距 */
-    border-radius: 5px; /* 圓角 */
-}
+      #scroll-container {
+        max-height: 200px; /* 設定容器的最大高度 */
+        overflow-y: auto; /* 當內容超過高度時顯示滾動條 */
+        border: 1px solid #ccc; /* 容器邊框 */
+        padding: 10px; /* 容器內邊距 */
+        border-radius: 5px; /* 圓角 */
+      }
 
       .radio-group {
         border: 2px solid #ccc;
@@ -105,6 +102,12 @@ body {
       }
     </style>
     <script language="JavaScript">
+      let minuendReal = 0;
+      let subtrahendReal = 0;
+
+      let repeatCount;
+      let currentRepeat = 0; // 當前的重複次數
+
       let totalQuestions,
         currentQuestion = 0;
 
@@ -153,8 +156,12 @@ body {
         totalQuestions = parseInt(
           document.getElementById("question-count").value
         );
+        repeatCount = parseInt(document.getElementById("repeat-count").value); // 獲取重複次數
         currentQuestion = 0;
+        currentRepeat = 0; // 重置重複次數
         elapsedTime = 0; // 重置計時
+        minuendReal = 0;
+        subtrahendReal = 0;
         document.getElementById("total-questions").textContent = totalQuestions; // 設定總題數
         document.getElementById("menu-container").style.display = "none";
         document.getElementById("game-container").style.display = "block";
@@ -164,11 +171,22 @@ body {
       }
 
       function generateProblem() {
-        currentQuestion++;
-        if (currentQuestion > totalQuestions) {
-          showResult();
-          return;
+        console.log(
+          `currentRepeat是${currentRepeat},repeatCount是${repeatCount}`
+        );
+
+        if(currentRepeat==0){
+          currentQuestion++;
+          if (currentQuestion > totalQuestions) {
+            showResult();
+            return;
+          }      
         }
+
+        if (currentRepeat < repeatCount ) {
+          currentRepeat++; // 表示是第幾次作答
+          document.getElementById("currentRepeatTag").textContent=currentRepeat+"/"+repeatCount;
+        } 
 
         // 更新題號顯示
         document.getElementById("current-question").textContent =
@@ -310,8 +328,8 @@ body {
               var minuend1 = Math.floor(Math.random() * 10);
               var subtrahend1 = Math.floor(Math.random() * (minuend1 + 1));
 
-              var minuend2 = Math.floor(Math.random() * 9)+1;
-              var subtrahend2 = Math.floor(Math.random() * (minuend2-1 ))+ 1;
+              var minuend2 = Math.floor(Math.random() * 9) + 1;
+              var subtrahend2 = Math.floor(Math.random() * (minuend2 - 1)) + 1;
 
               minuend =
                 (Math.floor(Math.random() * 9) + 1) * 100 +
@@ -372,33 +390,44 @@ body {
 
         //minuend = 404;
         //subtrahend = 337;
- 
+        console.log(currentRepeat + ":" + repeatCount);
 
         // 計算正確答案
-        let result = minuend - subtrahend;
+        if (currentRepeat == 1) {
+          minuendReal = minuend;
+          subtrahendReal = subtrahend;
+        }
 
-        if (minuend < 100) {
+        if (currentRepeat == repeatCount) {
+          currentRepeat = 0;
+        }
+
+        let result = minuendReal - subtrahendReal;
+
+        if (minuendReal < 100) {
           minuendHundreds.style.color = "white";
-          if (minuend < 10) {
+          if (minuendReal < 10) {
             minuendTens.style.color = "white";
           }
         }
 
-        if (subtrahend < 100) {
+        if (subtrahendReal < 100) {
           subtrahendHundreds.style.color = "white";
-          if (subtrahend < 10) {
+          if (subtrahendReal < 10) {
             subtrahendTens.style.color = "white";
           }
         }
 
         // 更新 HTML 中的數值
-        minuendOnes.innerText = minuend % 10;
-        minuendTens.innerText = Math.floor((minuend % 100) / 10);
-        minuendHundreds.innerText = Math.floor((minuend % 1000) / 100);
+        minuendOnes.innerText = minuendReal % 10;
+        minuendTens.innerText = Math.floor((minuendReal % 100) / 10);
+        minuendHundreds.innerText = Math.floor((minuendReal % 1000) / 100);
 
-        subtrahendOnes.innerText = subtrahend % 10;
-        subtrahendTens.innerText = Math.floor((subtrahend % 100) / 10);
-        subtrahendHundreds.innerText = Math.floor((subtrahend % 1000) / 100);
+        subtrahendOnes.innerText = subtrahendReal % 10;
+        subtrahendTens.innerText = Math.floor((subtrahendReal % 100) / 10);
+        subtrahendHundreds.innerText = Math.floor(
+          (subtrahendReal % 1000) / 100
+        );
 
         // 設定正確答案值
         document.getElementById("resultMessage").innerText = "";
@@ -498,37 +527,37 @@ body {
       }
 
       function showRecords() {
-    if (!window.userName) {
-        alert("請先輸入姓名以查閱記錄！");
-        return;
-    }
+        if (!window.userName) {
+          alert("請先輸入姓名以查閱記錄！");
+          return;
+        }
 
-    // 從 localStorage 獲取當前使用者的記錄
-    const records = JSON.parse(localStorage.getItem(`${window.userName}-records`)) || [];
-    
-    // 檢查是否有記錄
-    if (records.length === 0) {
-        alert("沒有找到任何歷史記錄！");
-        return;
-    }
+        // 從 localStorage 獲取當前使用者的記錄
+        const records =
+          JSON.parse(localStorage.getItem(`${window.userName}-records`)) || [];
 
-    // 創建一個顯示記錄的 HTML 字符串
-    let recordsHtml = "<h3>歷史記錄</h3><ul>";
-    
-    // 反向遍歷以顯示最新的記錄在最上方
-    for (let i = records.length - 1; i >= 0; i--) {
-        const record = records[i];
-        // 加入流水編號
-        const recordNumber = records.length - i; // 計算編號
-        recordsHtml += `<li>${recordNumber}，姓名: ${record.name}，日期: ${record.date}，單元: ${record.unit}，時間：${record.time}</li>`;
-    }
-    
-    recordsHtml += "</ul>";
+        // 檢查是否有記錄
+        if (records.length === 0) {
+          alert("沒有找到任何歷史記錄！");
+          return;
+        }
 
-    // 在滾動容器中顯示歷史記錄
-    document.getElementById("result-message").innerHTML = recordsHtml;
-}
+        // 創建一個顯示記錄的 HTML 字符串
+        let recordsHtml = "<h3>歷史記錄</h3><ul>";
 
+        // 反向遍歷以顯示最新的記錄在最上方
+        for (let i = records.length - 1; i >= 0; i--) {
+          const record = records[i];
+          // 加入流水編號
+          const recordNumber = records.length - i; // 計算編號
+          recordsHtml += `<li>${recordNumber}，姓名: ${record.name}，日期: ${record.date}，單元: ${record.unit}，時間：${record.time}</li>`;
+        }
+
+        recordsHtml += "</ul>";
+
+        // 在滾動容器中顯示歷史記錄
+        document.getElementById("result-message").innerHTML = recordsHtml;
+      }
 
       function clearRecords() {
         if (!window.userName) {
@@ -540,9 +569,8 @@ body {
         localStorage.removeItem(`${window.userName}-records`);
         alert("歷史記錄已清除！");
 
-// 返回主選單
-restartGame(); // 調用重新開始遊戲的函數
-
+        // 返回主選單
+        restartGame(); // 調用重新開始遊戲的函數
       }
 
       function showResult() {
@@ -570,7 +598,7 @@ restartGame(); // 調用重新開始遊戲的函數
 
         const borrowType = document.querySelector(
           'input[name="borrowType"]:checked'
-        ).nextSibling.textContent;        
+        ).nextSibling.textContent;
 
         // 結果資訊
         const resultMessage = `姓名：${window.userName}<br>
@@ -661,7 +689,6 @@ restartGame(); // 調用重新開始遊戲的函數
           option.textContent = name;
           selectElement.appendChild(option);
         });
-
 
         let inputOnes = document.getElementById("inputOnes");
         let inputTens = document.getElementById("inputTens");
@@ -843,8 +870,6 @@ restartGame(); // 調用重新開始遊戲的函數
             }
           });
         });
-
-
       };
     </script>
   </head>
@@ -852,7 +877,7 @@ restartGame(); // 調用重新開始遊戲的函數
     <!-- 主畫面選單 -->
     <div id="menu-container" class="menu-container">
       <h2>三位數以內的減法</h2>
-
+      
       <label for="user-name">請輸入姓名:</label>
       <select id="user-name" onchange="handleUserNameChange()">
         <option value="">-- 選擇姓名 --</option>
@@ -874,8 +899,6 @@ restartGame(); // 調用重新開始遊戲的函數
         <option value="50">50</option>
         <option value="100">100</option>
       </select>
-
- 
 
       <br /><br />
       <div class="radio-group">
@@ -966,6 +989,16 @@ restartGame(); // 調用重新開始遊戲的函數
           />
           不借位
         </label>
+        <br />
+        <label for="repeat-count" style="font-size: 14px; margin-right: 10px">同一題做答次數:</label>
+        <select id="repeat-count">
+          
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
       </div>
       <br />
       <button onclick="startGame()">確定</button>
@@ -990,8 +1023,9 @@ restartGame(); // 調用重新開始遊戲的函數
         id="question-counter"
         style="position: absolute; top: 20px; left: 20px; font-size: 20px"
       >
-        第 <span id="current-question">1</span> 題 /
-        <span id="total-questions">1</span> 題
+        第 <span id="current-question">1</span>/
+        <span id="total-questions">1</span>題 
+            [第<span id="currentRepeatTag"> 1 </span>次嘗試]
       </div>
       <div
         class="timer"
@@ -1010,7 +1044,6 @@ restartGame(); // 調用重新開始遊戲的函數
       <table width="500px" style="vertical-align: top">
         <tr>
           <td width="300px" class="no-border" style="text-align: left">
-            
             <table>
               <tr>
                 <td class="no-border"></td>
@@ -1155,11 +1188,20 @@ restartGame(); // 調用重新開始遊戲的函數
     <!-- 結果畫面 -->
     <div id="result-container" class="result-container" style="display: none">
       <h3>測驗完成！</h3>
-      <div id="scroll-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+      <div
+        id="scroll-container"
+        style="
+          max-height: 200px;
+          overflow-y: auto;
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 5px;
+        "
+      >
         <p id="result-message" style="text-align: left"></p>
-    </div>
+      </div>
       <!-- 在結果畫面中添加兩個按鈕 -->
-       <br /><br />
+      <br /><br />
       <button onclick="showRecords()">查閱過去記錄</button>
       <button onclick="clearRecords()">清除歷史記錄</button>
 
